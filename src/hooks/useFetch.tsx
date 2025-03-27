@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Post = {
   id: number;
@@ -16,32 +16,38 @@ export const useFetch = (url: string) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
 
-  const getData = async (url: string) => {
-    setIsLoading(true);
-    setError(false);
+  const getData = useCallback(
+    async (url: string) => {
+      setIsLoading(true);
+      setError(false);
 
-    try {
-      const response = await fetch(url);
-      const result = await response.json();
-      setData(result);
-    } catch {
-      setError(true);
-      throw new Error("Произошла ошибка при запросе на сервер");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        setData(result);
+      } catch {
+        setError(true);
+        throw new Error("Произошла ошибка при запросе на сервер");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [url]
+  );
 
-  const refetch = (params: FetchParams) => {
-    const paramsString = new URLSearchParams(
-      params.params as Record<string, string>
-    ).toString();
-    getData(`${url}?${paramsString}`);
-  };
+  const refetch = useCallback(
+    (params: FetchParams) => {
+      const paramsString = new URLSearchParams(
+        params.params as Record<string, string>
+      ).toString();
+      getData(`${url}?${paramsString}`);
+    },
+    [getData]
+  );
 
   useEffect(() => {
     getData(url);
-  }, [url]);
+  }, [getData]);
 
   return { data, isLoading, error, refetch };
 };
